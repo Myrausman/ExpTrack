@@ -18,7 +18,10 @@
             font-weight: bold;
             color: white;
             text-align: center;
+            overflow-y: auto; /* Enable vertical scrolling if content exceeds container height */
         }
+
+
         h1{
             color:darkblue;
             font-size: 7em;
@@ -32,7 +35,13 @@
             font-weight: 100;
             background-color: darkblue;
         }
-        .table{
+        .container-table {
+            max-height: 300px; /* Adjust the height as needed */
+            overflow-y: scroll;
+            overflow-x: scroll;
+            max-width: 1100px; /* Add "px" to specify the unit */
+        }
+        .table {
             font-size-adjust: auto;
             font-size: 1.2em;
             font-weight: 600;
@@ -43,8 +52,9 @@
         .table-bordered th,
         .table-bordered td {
             border: 2px solid ;
-            border-color:darkblue
+            border-color: darkblue;
         }
+
     </style>
     <title>Expense Tracker</title>
 </head>
@@ -52,53 +62,55 @@
     <div class="container">
         <h1 class="text-center">Expenses Tracker List</h1>
         <hr />
+        
+        
         <div class="text-center">
-        <div class="Label">
-        <p th:text="|Happy ${today}|">Today</p>
+            <div class="Label">
+                <p th:text="|Happy ${today}|">Today</p>
+            </div>
         </div>
-    </div>
-    <div class="container mt-5">  <div class="row">
-        <div class="col-md-12">
+        <div class="container mt-5">
+            <div class="row">
+                <div class="col-md-12">
+                    <th:block th:insert="~{/dashboard}"></th:block>
+                </div>
+            </div>
             
-          <th:block th:insert="~{/dashboard}"></th:block>
         </div>
-      </div>
-    </div>
-
-        <table class="table table-bordered border-primary table-hover table-primary">
-            <thead class="thead-dark">
-                <tr>
-                    <th>Actions</th>
-                    <th>Id</th>
-                    <th>Description</th>
-                    <th>Price</th>
-                    <th>Category</th>
-                    <th>Created Date</th>
-                    <th>Modified Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="ExpenseItem, rowStatus : ${ExpensesTrackerItems}" th:class="${rowStatus.even} ? 'even-row' : 'odd-row'">
-                    <td>
-                        <div class="btn btn-group-sm" role="group">
-                            <a class="btn btn-info" th:href="@{/edit/{id}(id=${ExpenseItem.id})}">Edit</a>
-                            <a class="btn btn-danger" th:href="@{/delete/{id}(id=${ExpenseItem.id})}">Delete</a>
-                        </div>
-                    </td>
-                    <td th:text="${ExpenseItem.id}">item_id</td>
-                    <td th:text="${ExpenseItem.description}">item_description</td>
-                    <td th:text="${ExpenseItem.price}">item_price</td>
-                    <td th:text="${ExpenseItem.category}">item_category</td>
-                    <td th:text="${ExpenseItem.createdDate}">item_created_date</td>
-                    <td th:text="${ExpenseItem.modifiedDate}">item_modified_date</td>
-                </tr>
-            </tbody>
-        </table>
-        <div class="text-right">
-            <strong>Total Price: <span th:text="${totalPrice} ?: '0'"></span></strong>
+        <div class="container-table"> <!-- Corrected class name -->
+            <table class="table table-bordered border-primary table-hover table-primary">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Actions</th>
+                        <th>Id</th>
+                        <th>Description</th>
+                        <th>Price</th>
+                        <th>Category</th>
+                        <th>Created Date</th>
+                        <th>Modified Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="ExpenseItem, rowStatus : ${ExpensesTrackerItems}" th:class="${rowStatus.even} ? 'even-row' : 'odd-row'">
+                        <td>
+                            <div class="btn btn-group-sm" role="group">
+                                <a class="btn btn-info" th:href="@{/edit/{id}(id=${ExpenseItem.id})}">Edit</a>
+                                <a class="btn btn-danger" th:href="@{/delete/{id}(id=${ExpenseItem.id})}">Delete</a>
+                            </div>
+                        </td>
+                        <td th:text="${ExpenseItem.id}">item_id</td>
+                        <td th:text="${ExpenseItem.description}">item_description</td>
+                        <td th:text="${ExpenseItem.price}">item_price</td>
+                        <td th:text="${ExpenseItem.category}">item_category</td>
+                        <td th:text="${#dates.format(ExpenseItem.createdDate, 'yyyy-MM-dd')}">item_created_date</td>
+                        <td th:text="${#dates.format(ExpenseItem.modifiedDate, 'yyyy-MM-dd')}">item_modified_date</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
-
-        <p><a class="btn btn-success" href="/create-expensestracker">Add an Expense!</a></p>
+        <div > 
+            <a class="btn btn-success" href="/create-expensestracker"> + Add an Expense!</a>
+        </div>
     </div>
    <script th:src="@{/webjars/jquery/3.6.0/jquery.min.js}"></script>
    <script th:src="@{/webjars/bootstrap/3.4.1/js/bootstrap.min.js}"></script>

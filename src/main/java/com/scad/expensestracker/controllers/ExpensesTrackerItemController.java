@@ -25,51 +25,50 @@ import jakarta.validation.Valid;
 
 @Controller
 public class ExpensesTrackerItemController {
+
     private final Logger logger = LoggerFactory.getLogger(ExpensesTrackerItemController.class);
 
     @Autowired
-    private ExpensesTrackerRepository ExpensesTrackerRepository;
+    private ExpensesTrackerRepository expensesTrackerRepository;
 
     @GetMapping("/")
     public ModelAndView index() {
         logger.debug("root to GET index");
         ModelAndView modelAndView = new ModelAndView("index");
-        List<ExpensesTrackerItem> expensesTrackerItems = (List<ExpensesTrackerItem>) ExpensesTrackerRepository.findAll();
-        double totalPrice = expensesTrackerItems.stream().mapToDouble(ExpensesTrackerItem::getPrice).sum();
+        List<ExpensesTrackerItem> expensesTrackerItems = (List<ExpensesTrackerItem>) expensesTrackerRepository.findAll();
+        double totalPrice = calculateTotalExpense(expensesTrackerItems);
         modelAndView.addObject("ExpensesTrackerItems", expensesTrackerItems);
         modelAndView.addObject("today", Instant.now().atZone(ZoneId.systemDefault()).toLocalDate().getDayOfWeek());
         modelAndView.addObject("totalPrice", totalPrice);
-        modelAndView.addObject("averageDailyExpenses", calculateAverageDailyExpense());
-        modelAndView.addObject("mostExpensiveCategory", findDominantCategory());
+        modelAndView.addObject("averageDailyExpenses", calculateAverageDailyExpense(expensesTrackerItems));
+        modelAndView.addObject("mostExpensiveCategory", findDominantCategory(expensesTrackerItems));
         return modelAndView;
     }
 
     @PostMapping("/ExpensesTracker")
-    public String createExpensesTrackerItem(@Valid ExpensesTrackerItem expensesTrackerItem, BindingResult result)
-    {
+    public String createExpensesTrackerItem(@Valid ExpensesTrackerItem expensesTrackerItem, BindingResult result) {
         if (result.hasErrors()) {
             return "add-ExpensesTracker-item";
         }
-        expensesTrackerItem.setCreatedDate(Instant.now());
-        expensesTrackerItem.setModifiedDate(Instant.now());
-        ExpensesTrackerRepository.save(expensesTrackerItem);
+        Instant now = Instant.now();
+        expensesTrackerItem.setCreatedDate(now);
+        expensesTrackerItem.setModifiedDate(now);
+        expensesTrackerRepository.save(expensesTrackerItem);
         return "redirect:/";
     }
-    
+
     @PostMapping("/ExpensesTracker/{id}")
     public String updateExpensesTrackerItem(@PathVariable("id") long id, @Valid ExpensesTrackerItem expensesTrackerItem, BindingResult result) {
         if (result.hasErrors()) {
             expensesTrackerItem.setId(id);
             return "update-ExpensesTracker-item";
         }
-    
         expensesTrackerItem.setModifiedDate(Instant.now());
-        ExpensesTrackerRepository.save(expensesTrackerItem);
+        expensesTrackerRepository.save(expensesTrackerItem);
         return "redirect:/";
     }
-    
-    private String findDominantCategory() {
-        List<ExpensesTrackerItem> items = (List<ExpensesTrackerItem>) ExpensesTrackerRepository.findAll();
+
+    private String findDominantCategory(List<ExpensesTrackerItem> items) {
         return items.stream()
             .collect(Collectors.groupingBy(ExpensesTrackerItem::getCategory, Collectors.summingDouble(ExpensesTrackerItem::getPrice)))
             .entrySet().stream()
@@ -77,15 +76,30 @@ public class ExpensesTrackerItemController {
             .map(Map.Entry::getKey)
             .orElse(null);
     }
-    
-    private double calculateTotalExpense() {
-        List<ExpensesTrackerItem> expensesTrackerItems = (List<ExpensesTrackerItem>) ExpensesTrackerRepository.findAll();
-        return expensesTrackerItems.stream().mapToDouble(ExpensesTrackerItem::getPrice).sum();
+
+    private double calculateTotalExpense(List<ExpensesTrackerItem> items) {
+        return items.stream().mapToDouble(ExpensesTrackerItem::getPrice).sum();
     }
-    
-    private double calculateAverageDailyExpense() {
-        long days = ChronoUnit.DAYS.between(LocalDate.now(), Instant.now().atZone(ZoneId.systemDefault()).toLocalDate());
-        return days == 0 ? 1200.00 : calculateTotalExpense() / days; // Handle division by zero
+
+    private double calculateAverageDailyExpense(List<ExpensesTrackerItem> items) {
+        if (items.isEmpty()) {
+            return 0.0;
+        }
+
+        LocalDate earliestDate = items.stream()
+            .map(item -> item.getCreatedDate().atZone(ZoneId.systemDefault()).toLocalDate())
+            .min(LocalDate::compareTo)
+            .orElse(LocalDate.now());
+
+        LocalDate latestDate = items.stream()
+            .map(item -> item.getCreatedDate().atZone(ZoneId.systemDefault()).toLocalDate())
+            .max(LocalDate::compareTo)
+            .orElse(LocalDate.now());
+
+        long daysBetween = ChronoUnit.DAYS.between(earliestDate, latestDate) + 1;
+
+        double totalExpenses = calculateTotalExpense(items);
+
+        return totalExpenses / daysBetween;
     }
-    }
-    
+}

@@ -35,7 +35,7 @@ public class ExpensesTrackerItemController {
     public ModelAndView index() {
         logger.debug("root to GET index");
         ModelAndView modelAndView = new ModelAndView("index");
-        List<ExpensesTrackerItem> expensesTrackerItems = (List<ExpensesTrackerItem>) expensesTrackerRepository.findAll();
+        List<ExpensesTrackerItem> expensesTrackerItems = (List<ExpensesTrackerItem>) ExpensesTrackerRepository.findAll();
         double totalPrice = expensesTrackerItems.stream().mapToDouble(ExpensesTrackerItem::getPrice).sum();
         modelAndView.addObject("ExpensesTrackerItems", expensesTrackerItems);
         modelAndView.addObject("today", Instant.now().atZone(ZoneId.systemDefault()).toLocalDate().getDayOfWeek());
@@ -63,7 +63,7 @@ public class ExpensesTrackerItemController {
             return "update-ExpensesTracker-item";
         }
         expensesTrackerItem.setModifiedDate(Instant.now());
-        expensesTrackerRepository.save(expensesTrackerItem);
+        ExpensesTrackerRepository.save(expensesTrackerItem);
         return "redirect:/";
     }
     

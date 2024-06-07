@@ -43,7 +43,8 @@ public class ExpensesTrackerItem {
     private Instant createdDate;
     private Instant modifiedDate;
 
-    public ExpensesTrackerItem(String description, Integer price, String category) {
+    public ExpensesTrackerItem(String description, Integer price, 
+    String category) {
         this.description = description;
         this.price = price;
         this.category = category;
